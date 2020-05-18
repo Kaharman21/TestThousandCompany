@@ -67,6 +67,13 @@ public class MovieList {
     @Expose
     private String releaseDate;
 
+
+    public MovieList(String posterPath, String title, Double voteAverage) {
+        this.posterPath = posterPath;
+        this.title = title;
+        this.voteAverage = voteAverage;
+    }
+
     public String getPosterPath() {
         return posterPath;
     }

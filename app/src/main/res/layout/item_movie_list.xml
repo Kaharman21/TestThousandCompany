@@ -17,9 +17,17 @@
         <ImageView
             android:id="@+id/img_poster"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="150dp"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_launcher_background"
+            />
+        <ImageView
+            android:id="@+id/img_poster_glide"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_background"
+            android:layout_marginTop="160dp"
             />
 
         <TextView

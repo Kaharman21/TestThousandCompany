@@ -3,17 +3,26 @@ package com.pavlodar.testthousandcompany;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.pavlodar.testthousandcompany.Adapter.MovieListAdapter;
 import com.pavlodar.testthousandcompany.Common.Common;
+import com.pavlodar.testthousandcompany.Database.MovieDatabase;
+import com.pavlodar.testthousandcompany.Model.MovieList;
+import com.pavlodar.testthousandcompany.Model.MovieListModel;
 import com.pavlodar.testthousandcompany.Retrofit.ITestThousandCompanyAPI;
 import com.pavlodar.testthousandcompany.Retrofit.RetrofitClient;
 import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -25,10 +34,15 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.recycler_movie_list)
     RecyclerView recycler_movie_list;
+    @BindView(R.id.image)
+    ImageView image;
 
     ITestThousandCompanyAPI testThousandCompanyAPI;
     CompositeDisposable compositeDisposable = new CompositeDisposable();
     MovieListAdapter movieListAdapter;
+
+    MovieDatabase movieDatabase;
+    List<MovieList> movieList;
 
 
     @Override
@@ -52,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void showMovieList(){
+        Glide.with(this)
+                .load("https://image.tmdb.org/t/p/w500/wwemzKWzjKYJFfCeiB57q3r4Bcm.png")
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .into(image);
         compositeDisposable.add(testThousandCompanyAPI.getMovieList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -75,7 +93,15 @@ public class MainActivity extends AppCompatActivity {
 //                    Picasso.get().load("https://image.tmdb.org/t/p/w500/rzRwTcFvttcN1ZpX2xv4j3tSdJu.jpg")
 //                            .into(image);
                 }, throwable -> {
-                    Toast.makeText(this, "2 ERROR: showMovieList "+ throwable.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    movieList = new ArrayList<>();
+                    movieList.add(new MovieList( "/rzRwTcFvttcN1ZpX2xv4j3tSdJu.jpg", "Thor: Ragnarok", 7.6));
+                    movieList.add(new MovieList( "/c24sv2weTHPsmDa7jEMN0m2P3RT.jpg", "Spider-Man: Homecoming", 7.4));
+                    movieList.add(new MovieList( "/y4MBh0EjBlMuOzv9axM4qJlmhzz.jpg", "Guardians of the Galaxy Vol. 2", 7.6));
+                    movieListAdapter = new MovieListAdapter(this, movieList);
+                    recycler_movie_list.setAdapter(movieListAdapter);
+
+                    Toast.makeText(this, "2 ERROR: {Не отвечает сервак, нет инета} "+ throwable.getMessage(), Toast.LENGTH_SHORT).show();
                 }));
     }
 
@@ -99,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         testThousandCompanyAPI = RetrofitClient.getInstance(Common.API_THOUSAND_COMPANY_ENDPOINT).create(ITestThousandCompanyAPI.class);
+
+   //     movieDatabase = MovieDatabase.getInstance(this);
     }
 
     private void initView() {

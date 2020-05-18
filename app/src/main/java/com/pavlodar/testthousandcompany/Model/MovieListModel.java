@@ -35,6 +35,9 @@ public class MovieListModel {
     @Expose
     private String posterPath;
 
+
+
+
     public String getCreatedBy() {
         return createdBy;
     }
