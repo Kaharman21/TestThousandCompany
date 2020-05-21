@@ -12,6 +12,7 @@ public class MovieItem {
     public MovieItem() {
     }
 
+
     @PrimaryKey
     @ColumnInfo(name = "movieid")
     private int id;
@@ -24,6 +25,9 @@ public class MovieItem {
 
     @ColumnInfo(name = "posterPath")
     private String posterPath;
+
+    @ColumnInfo(name = "position")
+    private int position;
 
 
     public int getId() {
@@ -56,5 +60,13 @@ public class MovieItem {
 
     public void setPosterPath(String posterPath) {
         this.posterPath = posterPath;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
     }
 }

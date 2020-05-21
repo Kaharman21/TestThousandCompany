@@ -1,7 +1,6 @@
 package com.pavlodar.testthousandcompany.Retrofit;
 
 import com.pavlodar.testthousandcompany.Model.MovieListModel;
-import com.pavlodar.testthousandcompany.Model.MovieDetails;
 
 import io.reactivex.Observable;
 import retrofit2.http.GET;
@@ -11,8 +10,6 @@ public interface ITestThousandCompanyAPI {
 
     // Можно указывать без language=en-US
 
-    @GET("3/movie/33")
-    Observable<MovieDetails> getMovieDetails(@Query("api_key") String apiKey);
 
 //    @GET("3/list/1")
 //    Observable<MovieListModel> getMovieList(@Query("api_key") String apiKey);

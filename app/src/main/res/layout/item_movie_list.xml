@@ -36,7 +36,9 @@
             android:layout_height="wrap_content"
             android:text="Rating"
             android:textSize="30sp"
-            android:layout_gravity="right"/>
+            android:layout_gravity="right"
+            android:textColor="@android:color/black"
+            android:background="@android:color/white"/>
 
         <TextView
             android:id="@+id/txt_vote_avarage"

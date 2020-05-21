@@ -1,6 +1,7 @@
 package com.pavlodar.testthousandcompany.Adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.pavlodar.testthousandcompany.Common.Common;
 import com.pavlodar.testthousandcompany.Database.MovieDatabase;
 import com.pavlodar.testthousandcompany.Database.MovieItem;
 import com.pavlodar.testthousandcompany.Model.MovieList;
@@ -43,6 +45,10 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.MyVi
 
     MovieDatabase movieDatabase;
 
+    List<MovieItem> movieItems;
+    boolean internet;
+
+
 
 
     public MovieListAdapter(Context context, List<MovieList> movieList) {
@@ -50,6 +56,8 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.MyVi
         this.movieList = movieList;
         movieDatabase = MovieDatabase.getInstance(context);
     }
+
+
 
 
     @NonNull
@@ -61,40 +69,46 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.MyVi
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        holder.txt_vote_avarage.setText(String.valueOf(movieList.get(position).getVoteAverage()));
-        holder.txt_favorite.setText(movieList.get(position).getTitle());
+
+        if (movieList.size() > 0) {
+            Log.d("TAG", "Adapter = " + position);
+            holder.txt_vote_avarage.setText(String.valueOf(movieList.get(position).getVoteAverage()));
+            holder.txt_favorite.setText(movieList.get(position).getTitle());
+
+            Log.d("TAG", "Movie list size A D A P T E E R ==== " + movieList.size());
+
+            Picasso.get().load("https://image.tmdb.org/t/p/w500/" + movieList.get(position).getPosterPath())
+                    .into(holder.img_poster);
+
+            Glide.with(context)
+                    .load("https://image.tmdb.org/t/p/w500/" + movieList.get(position).getPosterPath())
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(holder.img_poster_glide);
 
 
+//        MovieItem movieItem = new MovieItem();
+//        movieItem.setId(movieList.get(position).getId());
+//        movieItem.setPosterPath(movieList.get(position).getPosterPath());
+//        movieItem.setTitle(movieList.get(position).getTitle());
+//        movieItem.setVoteAverage(movieList.get(position).getVoteAverage());
+//
+//
+//        compositeDisposable.add(movieDatabase.movieDAO().insert(movieItem)
+//        .subscribeOn(Schedulers.io())
+//        .observeOn(AndroidSchedulers.mainThread())
+//        .subscribe(() -> {
+//
+//        }, throwable -> {
+//
+//        }));
 
-
-        Picasso.get().load("https://image.tmdb.org/t/p/w500/" + movieList.get(position).getPosterPath())
-        .into(holder.img_poster);
-
-        Glide.with(context)
-                .load("https://image.tmdb.org/t/p/w500/" + movieList.get(position).getPosterPath())
-                .diskCacheStrategy(DiskCacheStrategy.DATA)
-                .into(holder.img_poster_glide);
-
-
-        MovieItem movieItem = new MovieItem();
-        movieItem.setId(movieList.get(position).getId());
-        movieItem.setPosterPath(movieList.get(position).getPosterPath());
-        movieItem.setTitle(movieList.get(position).getTitle());
-        movieItem.setVoteAverage(movieList.get(position).getVoteAverage());
-
-        compositeDisposable.add(movieDatabase.movieDAO().insert(movieItem)
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(() -> {
-
-        }, throwable -> {
-
-        }));
-
-        // Добавление в БД для кэша
+            // Добавление в БД для кэша
 //        movieDatabase.movieDAO().getMovies();
-
-
+        }
+        else
+        {
+            Toast.makeText(context, "Значения отсутствуют", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

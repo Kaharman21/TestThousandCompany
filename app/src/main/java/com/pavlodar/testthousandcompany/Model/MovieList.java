@@ -68,10 +68,17 @@ public class MovieList {
     private String releaseDate;
 
 
-    public MovieList(String posterPath, String title, Double voteAverage) {
+    public MovieList(String title, String posterPath, Double voteAverage) {
         this.posterPath = posterPath;
         this.title = title;
         this.voteAverage = voteAverage;
+    }
+
+    public MovieList(Integer id, String title, String posterPath, Double voteAverage) {
+        this.posterPath = posterPath;
+        this.voteAverage = voteAverage;
+        this.id = id;
+        this.title = title;
     }
 
     public String getPosterPath() {
