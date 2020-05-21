@@ -77,8 +77,9 @@ public class MainActivity extends AppCompatActivity {
 
         init();
         initView();
-        showMovieList();
+    //    showMovieList();
         swipeRefreshing();
+        dataInTheCache();
 
 
 
@@ -237,50 +238,198 @@ public class MainActivity extends AppCompatActivity {
 
                     Toast.makeText(this, "2 ERROR: {Не отвечает сервак, нет инета} "+ throwable.getMessage(), Toast.LENGTH_SHORT).show();
 
-                    // Скисок фильмов с КЭШа
-                    compositeDisposable.add(movieDatabase.movieDAO().getMovies()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(movieItems -> {
-                        Toast.makeText(this, "movieItems === "+ Common.itemCount, Toast.LENGTH_SHORT).show();
-
-
-                        // Если в КЭШе есть данные, то отправляем их в Адаптер. Если нету то выводим Тоаст
-                        if (movieItems.size() > 0) {
-                            Toast.makeText(this, "Данные ЕСТЬ", Toast.LENGTH_SHORT).show();
-                            Log.d("TAG", "Данные ЕСТЬ "+ movieItems.size() );
-
-                            for (int i = 0; i < movieItems.size(); i++) {
-
-                                movieList.add(new MovieList(movieItems.get(i).getId(), movieItems.get(i).getTitle(),
-                                        movieItems.get(i).getPosterPath(), movieItems.get(i).getVoteAverage()));
-                                Log.d("TAG", "ИИИИЗЗЗЗЗ Кешаааа " + movieList.get(i).getTitle() + "   pos   = " + movieItems.get(i).getPosition());
-                            }
-
-                            movieListAdapter = new MovieListAdapter(this, movieList);
-                            recycler_movie_list.setAdapter(movieListAdapter);
-                        }
-                        else
-                        {
-                            Toast.makeText(this, "ИНЕТА НЕТ. Данные отсутствуют", Toast.LENGTH_SHORT).show();
-                        }
-//
-
-                        Log.d("TAG", "ИИИИЗЗЗЗЗ Кешаааа SIZE *0***  " + movieList.size());
-                        Log.d("TAG", "T O TTTTOOoooooooooooooooooooooo *5***  " + movieItems.size());
-
-                        collectionsSort();
-
-
-                    }, throwable1 -> {
-                        Toast.makeText(this, "[movieDatabase.movieDAO().getMovies()] = "+throwable1.getMessage(), Toast.LENGTH_SHORT).show();
-                    }));
+                    // TODO Показываем из КЭШа
+                    showFromCache();
 
 
                 }));
     }
 
 
+    private void dataInTheCache ()
+    {
+        compositeDisposable.add(movieDatabase.movieDAO().getMovies()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(movieItems ->{
+
+                    // TODO Проверка есть ли данные в КЭШе?
+                    if (movieItems.size() > 0) {
+
+                        // TODO Данные в КЭШе есть
+
+                        //TODO Здесь идем на сервер и проверяем актуальны ли данные в КЭШе? (проверяем по количеству)
+                        compositeDisposable.add(testThousandCompanyAPI.getMovieList()
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(movieListModel -> {
+
+                                    //TODO Если по количетсву записей равны то предполагаем, что данные актуальны и отображаем из КЭШа+++++++++
+                                    if (movieListModel.getItemCount() == movieItems.size())
+                                    {
+                                        showFromCache();
+                                        Toast.makeText(this, "Актуальные данные с КЭШа", Toast.LENGTH_SHORT).show();
+                                    }
+                                    else
+                                    {
+                                        Toast.makeText(this, "Данные с КЭШа НЕ АКТУАЛЬНЫ", Toast.LENGTH_SHORT).show();
+
+                                        // TODO Данные в КЭШе не актуальны. Удаляем КЭШ и создаем новый
+                                        deleteAllFromCache();
+
+                                        // TODO НАДО ПЕРЕПРОВЕРИТЬ
+                                        // TODO НАДО ПЕРЕПРОВЕРИТЬ
+                                        // TODO НАДО ПЕРЕПРОВЕРИТЬ
+                                        // TODO НАДО ПЕРЕПРОВЕРИТЬ
+                                        // TODO передаем список в Адаптер
+                                        movieList = movieListModel.getMovieLists();
+                                        movieListAdapter = new MovieListAdapter(this, movieList);
+                                        recycler_movie_list.setAdapter(movieListAdapter);
+
+                                        // TODO добавляем актуальные данные в кэш
+                                        for (int i=0; i<movieListModel.getItemCount(); i++)
+                                        {
+                                            Log.d("TAG", "INSERT +++ ***" + movieListModel.getMovieLists().get(i).getTitle());
+
+
+                                            movieItem = new MovieItem();
+                                            movieItem.setId(movieListModel.getMovieLists().get(i).getId());
+                                            movieItem.setPosterPath(movieListModel.getMovieLists().get(i).getPosterPath());
+                                            movieItem.setTitle(movieListModel.getMovieLists().get(i).getTitle());
+                                            movieItem.setVoteAverage(movieListModel.getMovieLists().get(i).getVoteAverage());
+                                            movieItem.setPosition(i);
+
+
+                                            compositeDisposable.add(movieDatabase.movieDAO().insert(movieItem)
+                                                    .subscribeOn(Schedulers.io())
+                                                    .observeOn(AndroidSchedulers.mainThread())
+                                                    .subscribe(() -> {
+                                                        Log.d("TAG", " Добавлено в КЭШшшшш  =============== " + movieItem.getTitle() +"  === "+movieItem.getPosition());
+                                                    }, throwable -> {
+
+                                                    }));
+
+                                        }
+
+
+                                    }
+
+                                }, throwable -> {
+                                    // TODO Инет, либо сервер не работают. Отображаем данные с КЭШа     ++++++++++
+                                    showFromCache();
+                                    Log.d("TAG", "[testThousandCompanyAPI.getMovieList()] = "+throwable.getMessage());
+                                    Toast.makeText(this, "[testThousandCompanyAPI.getMovieList()] = "+throwable.getMessage(), Toast.LENGTH_SHORT).show();
+
+                                }));
+                    }
+                    else
+                    {
+                        // TODO Данных в КЭШе нету. Инет не проверен      +++++++++
+                        Toast.makeText(this, "Данные отсутствуют", Toast.LENGTH_SHORT).show();
+
+                        compositeDisposable.add(testThousandCompanyAPI.getMovieList()
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(movieListModel -> {
+                                    // TODO Инет работает, загружаем новые данные в КЭШ. Отображаем данные с сервера++++++++
+
+                                    // TODO передаем список в Адаптер++++++++++
+                                    movieList = movieListModel.getMovieLists();
+                                    movieListAdapter = new MovieListAdapter(this, movieList);
+                                    recycler_movie_list.setAdapter(movieListAdapter);
+
+                                    // TODO добавляем актуальные данные в кэш    +++++++++++
+                                    for (int i=0; i<movieListModel.getItemCount(); i++)
+                                    {
+                                        Log.d("TAG", "INSERT +++ ***" + movieListModel.getMovieLists().get(i).getTitle());
+
+
+                                        movieItem = new MovieItem();
+                                        movieItem.setId(movieListModel.getMovieLists().get(i).getId());
+                                        movieItem.setPosterPath(movieListModel.getMovieLists().get(i).getPosterPath());
+                                        movieItem.setTitle(movieListModel.getMovieLists().get(i).getTitle());
+                                        movieItem.setVoteAverage(movieListModel.getMovieLists().get(i).getVoteAverage());
+                                        movieItem.setPosition(i);
+
+
+                                        compositeDisposable.add(movieDatabase.movieDAO().insert(movieItem)
+                                                .subscribeOn(Schedulers.io())
+                                                .observeOn(AndroidSchedulers.mainThread())
+                                                .subscribe(() -> {
+                                                    Log.d("TAG", " Добавлено в КЭШшшшш  =============== " + movieItem.getTitle() +"  === "+movieItem.getPosition());
+                                                }, throwable -> {
+                                                    Log.d("TAG", throwable.getMessage());
+                                                }));
+
+                                    }
+
+                                }, throwable -> {
+                                    // TODO Данных в КЭШе нету. Инет, либо сервер не работают ++++++++
+                                    Toast.makeText(this, "Похоже, у Вас проблемы с интернетом", Toast.LENGTH_SHORT).show();
+
+                                }));
+                    }
+
+                },throwable -> {
+
+                    Toast.makeText(this, "[movieDatabase.movieDAO().getMovies()] = "+throwable.getMessage(), Toast.LENGTH_SHORT).show();
+
+                }));
+    }
+
+
+    private void showFromCache(){
+
+        // Скисок фильмов с КЭШа
+        compositeDisposable.add(movieDatabase.movieDAO().getMovies()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(movieItems -> {
+                    Toast.makeText(this, "movieItems === "+ Common.itemCount, Toast.LENGTH_SHORT).show();
+
+
+                    // Если в КЭШе есть данные, то отправляем их в Адаптер. Если нету то выводим Тоаст
+                    if (movieItems.size() > 0) {
+                        Toast.makeText(this, "Данные ЕСТЬ", Toast.LENGTH_SHORT).show();
+                        Log.d("TAG", "Данные ЕСТЬ "+ movieItems.size() );
+
+                        for (int i = 0; i < movieItems.size(); i++) {
+
+                            movieList.add(new MovieList(movieItems.get(i).getId(), movieItems.get(i).getTitle(),
+                                    movieItems.get(i).getPosterPath(), movieItems.get(i).getVoteAverage()));
+                            Log.d("TAG", "ИИИИЗЗЗЗЗ Кешаааа " + movieList.get(i).getTitle() + "   pos   = " + movieItems.get(i).getPosition());
+                        }
+
+                        movieListAdapter = new MovieListAdapter(this, movieList);
+                        recycler_movie_list.setAdapter(movieListAdapter);
+                    }
+                    else
+                    {
+                        Toast.makeText(this, "ИНЕТА НЕТ. Данные отсутствуют", Toast.LENGTH_SHORT).show();
+                    }
+//
+
+                    Log.d("TAG", "ИИИИЗЗЗЗЗ Кешаааа SIZE *0***  " + movieList.size());
+                    Log.d("TAG", "T O TTTTOOoooooooooooooooooooooo *5***  " + movieItems.size());
+
+                    collectionsSort();
+
+
+                }, throwable1 -> {
+                    Toast.makeText(this, "[movieDatabase.movieDAO().getMovies()] = "+throwable1.getMessage(), Toast.LENGTH_SHORT).show();
+                }));
+
+    }
+
+    private void deleteAllFromCache() {
+        compositeDisposable.add(movieDatabase.movieDAO().deleteAll()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(integer ->{
+                }, throwable -> {}));
+
+        movieListAdapter.notifyDataSetChanged();
+    }
 
 
     private void init() {
